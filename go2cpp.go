@@ -192,16 +192,6 @@ func parseSpec(fullText []byte, spec ast.Spec) (string, error) {
 	}
 }
 
-func parseExpr(fullText []byte, expr ast.Expr) (string, error) {
-	switch v := expr.(type) {
-	case *ast.BasicLit:
-		return parseBasicLit(fullText, v)
-	case *ast.Ident:
-		return parseIdent(fullText, v)
-	default:
-		return "", fmt.Errorf("unsupported expression: %s", stringifyNode(fullText, expr))
-	}
-}
 
 func parseIdent(fullText []byte, ident *ast.Ident) (string, error) {
 	return ident.Name, nil

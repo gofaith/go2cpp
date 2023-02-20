@@ -1,5 +1,5 @@
 QString PrintMe(QString a, long long int b) {
-QString a;
-QString b = "asd";
+long long int i = 1;
+i = i + 1;
 return "";
 }

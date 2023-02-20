@@ -1,7 +1,7 @@
 package hello
 
 func PrintMe(a string,b int)string{
-	var a string
-	var b string ="asd"
+	var i int=1
+	i=i+1
 	return ""
 }
