@@ -1,0 +1,7 @@
+package hello
+
+func PrintMe(a string,b int)string{
+	var a string
+	var b string ="asd"
+	return ""
+}
