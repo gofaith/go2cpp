@@ -79,65 +79,19 @@ func parseFuncDecl(fullText []byte, d *ast.FuncDecl) (string, error) {
 		buf.WriteString(strings.Join(ss, ", "))
 	}
 
-	buf.WriteString(") {\n")
+	buf.WriteString(")\n")
 
 	// body
 	if d.Body != nil {
-		for _, stmt := range d.Body.List {
-			s, e := parseStmt(fullText, stmt)
-			if e != nil {
-				log.Println(e)
-				return "", e
-			}
-			buf.WriteString(s)
-		}
-	}
-	buf.WriteString("}")
-	return buf.String(), nil
-}
-
-func parseStmt(fullText []byte, v ast.Stmt) (string, error) {
-	switch stmt := v.(type) {
-	case *ast.ReturnStmt:
-		if len(stmt.Results) == 0 {
-			return "return;\n", nil
-		}
-		str, e := parseExpr(fullText, stmt.Results[0])
+		s, e := parseBlockStmt(fullText, d.Body)
 		if e != nil {
 			log.Println(e)
 			return "", e
 		}
-
-		return "return " + str + ";\n", nil
-
-	case *ast.AssignStmt:
-		if stmt.Tok.String() == ":=" {
-			return "", fmt.Errorf("unsupported statement: %s", stringifyNode(fullText, v))
-		}
-
-		buf := new(strings.Builder)
-
-		for i, hs := range stmt.Lhs {
-			left, e := parseExpr(fullText, hs)
-			if e != nil {
-				log.Println(e)
-				return "", e
-			}
-			right, e := parseExpr(fullText, stmt.Rhs[i])
-			if e != nil {
-				log.Println(e)
-				return "", e
-			}
-			buf.WriteString(left + " = " + right + ";\n")
-		}
-
-		return buf.String(), nil
-
-	case *ast.DeclStmt:
-		return parseDecl(fullText, stmt.Decl)
-	default:
-		return "", fmt.Errorf("unsupported statement: %s", stringifyNode(fullText, v))
+		buf.WriteString(s)
 	}
+
+	return buf.String(), nil
 }
 
 func parseDecl(fullText []byte, decl ast.Decl) (string, error) {
@@ -191,7 +145,6 @@ func parseSpec(fullText []byte, spec ast.Spec) (string, error) {
 		return "", fmt.Errorf("unsupported spec: %s", stringifyNode(fullText, spec))
 	}
 }
-
 
 func parseIdent(fullText []byte, ident *ast.Ident) (string, error) {
 	return ident.Name, nil
