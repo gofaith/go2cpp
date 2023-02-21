@@ -1,9 +1,10 @@
-QString PrintMe(QString a, long long int b)
+QString PrintMe()
 {
-long long int i = 12;
-if(i > 0){
-i++;
-QString b = "";
+long long int i = 0;
+;
+for(;i < 10;i++)
+{
 }
+;
 return "";
 }
