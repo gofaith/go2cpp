@@ -15,11 +15,33 @@ func parseExpr(fullText []byte, expr ast.Expr) (string, error) {
 		return parseIdent(fullText, v)
 	case *ast.BinaryExpr:
 		return parseBinaryExpr(fullText, v)
+	case *ast.CallExpr:
+		return parseCallExpr(fullText, v)
 	default:
 		return "", fmt.Errorf("unsupported expression: %s", stringifyNode(fullText, expr))
 	}
 }
+func parseCallExpr(fullText []byte, call *ast.CallExpr) (string, error) {
+	switch f := call.Fun.(type) {
+	case *ast.SelectorExpr:
+		text := stringifyNode(fullText, f)
+		if text == "errors.New" || text == "fmt.Errorf" {
+			if len(call.Args) == 0 {
+				return "", fmt.Errorf("wrong call expr: %s", stringifyNode(fullText, call))
+			}
+			expr, e := parseExpr(fullText, call.Args[0])
+			if e != nil {
+				log.Println(e)
+				return "", e
+			}
 
+			return "QString(" + expr + ")", nil
+		}
+		return "unsupported", nil
+	default:
+		return "", fmt.Errorf("unsupported call expr: %s", stringifyNode(fullText, call))
+	}
+}
 func parseBinaryExpr(fullText []byte, binary *ast.BinaryExpr) (string, error) {
 	switch binary.Op {
 	case token.ADD, token.SUB, token.MUL, token.QUO, token.REM,

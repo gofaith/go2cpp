@@ -14,13 +14,32 @@ func parseStmt(fullText []byte, v ast.Stmt, variables map[string]struct{}) (stri
 		if len(stmt.Results) == 0 {
 			return "return", nil
 		}
+		if len(stmt.Results) > 1 {
+			// unimplemented, because of try catch block problem
+			return "", fmt.Errorf("Multiple return values are not supported: %v", stringifyNode(fullText, v))
+
+			// second := stringifyNode(fullText, stmt.Results[1])
+			// if second != "nil" {
+			// 	if len(stmt.Results) > 2 || !(strings.HasPrefix(second, "errors.New(") || strings.HasPrefix(second, "fmt.Errorf(")) {
+			// 		return "", fmt.Errorf("Multiple return values are not supported: %v", stringifyNode(fullText, v))
+			// 	}
+			// 	// error
+			// 	exception, e := parseExpr(fullText, stmt.Results[1])
+			// 	if e != nil {
+			// 		log.Println(e)
+			// 		return "", e
+			// 	}
+			// 	return "throw " + exception, nil
+			// }
+		}
+
 		str, e := parseExpr(fullText, stmt.Results[0])
 		if e != nil {
 			log.Println(e)
 			return "", e
 		}
 
-		return "return " + str + "", nil
+		return "return " + str, nil
 
 	case *ast.AssignStmt:
 		buf := new(strings.Builder)
@@ -138,7 +157,7 @@ func parseForStmt(fullText []byte, v *ast.ForStmt, variables map[string]struct{}
 		log.Println(e)
 		return "", e
 	}
-	buf.WriteString(post + ")\n")
+	buf.WriteString(post + ")")
 
 	//block
 	block, e := parseBlockStmt(fullText, v.Body)

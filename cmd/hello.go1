@@ -1,11 +1,5 @@
 package hello
 
 func PrintMe()string{
-	i,j:=1,2
-	j,k:=3,""
-
-	for i:=0;i<10;i++{
-		
-	}
-	return ""
+	return "",errors.New("asd")
 }

@@ -1,6 +1,7 @@
 # go2cpp
 Convert Go code to C++ code
 
-- error
+- --error--
 - array
 - class
+- println

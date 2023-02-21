@@ -79,7 +79,7 @@ func parseFuncDecl(fullText []byte, d *ast.FuncDecl) (string, error) {
 		buf.WriteString(strings.Join(ss, ", "))
 	}
 
-	buf.WriteString(")\n")
+	buf.WriteString(")")
 
 	// body
 	if d.Body != nil {
