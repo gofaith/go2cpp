@@ -94,12 +94,12 @@ func parseFuncDecl(fullText []byte, d *ast.FuncDecl) (string, error) {
 	return buf.String(), nil
 }
 
-func parseDecl(fullText []byte, decl ast.Decl) (string, error) {
+func parseDecl(fullText []byte, decl ast.Decl, variables map[string]struct{}) (string, error) {
 	switch v := decl.(type) {
 	case *ast.GenDecl:
 		buf := new(strings.Builder)
 		for _, spec := range v.Specs {
-			s, e := parseSpec(fullText, spec)
+			s, e := parseSpec(fullText, spec, variables)
 			if e != nil {
 				log.Println(e)
 				return "", e
@@ -110,39 +110,6 @@ func parseDecl(fullText []byte, decl ast.Decl) (string, error) {
 
 	default:
 		return "", fmt.Errorf("unsupported declaration: %s", stringifyNode(fullText, decl))
-	}
-}
-
-func parseSpec(fullText []byte, spec ast.Spec) (string, error) {
-	switch v := spec.(type) {
-	case *ast.ValueSpec:
-		if v.Type == nil {
-			return "", fmt.Errorf("unsupported spec: %s", stringifyNode(fullText, spec))
-		}
-		buf := new(strings.Builder)
-		t, e := parseFieldType(fullText, v.Type)
-		if e != nil {
-			log.Println(e)
-			return "", e
-		}
-
-		for i, name := range v.Names {
-			buf.WriteString(t + " " + name.Name)
-			if len(v.Values) > 0 {
-				value, e := parseExpr(fullText, v.Values[i])
-				if e != nil {
-					log.Println(e)
-					return "", e
-				}
-
-				buf.WriteString(" = " + value)
-			}
-			buf.WriteString(";\n")
-		}
-		return buf.String(), nil
-
-	default:
-		return "", fmt.Errorf("unsupported spec: %s", stringifyNode(fullText, spec))
 	}
 }
 

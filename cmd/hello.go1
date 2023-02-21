@@ -1,9 +1,11 @@
 package hello
 
 func PrintMe()string{
-	var i int=0;
-	for ;i<10;i++{
+	i,j:=1,2
+	j,k:=3,""
 
+	for i:=0;i<10;i++{
+		
 	}
 	return ""
 }

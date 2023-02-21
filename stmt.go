@@ -3,11 +3,12 @@ package go2cpp
 import (
 	"fmt"
 	"go/ast"
+	"go/token"
 	"log"
 	"strings"
 )
 
-func parseStmt(fullText []byte, v ast.Stmt) (string, error) {
+func parseStmt(fullText []byte, v ast.Stmt, variables map[string]struct{}) (string, error) {
 	switch stmt := v.(type) {
 	case *ast.ReturnStmt:
 		if len(stmt.Results) == 0 {
@@ -22,10 +23,6 @@ func parseStmt(fullText []byte, v ast.Stmt) (string, error) {
 		return "return " + str + "", nil
 
 	case *ast.AssignStmt:
-		if stmt.Tok.String() == ":=" {
-			return "", fmt.Errorf("unsupported statement: %s", stringifyNode(fullText, v))
-		}
-
 		buf := new(strings.Builder)
 
 		for i, hs := range stmt.Lhs {
@@ -39,13 +36,24 @@ func parseStmt(fullText []byte, v ast.Stmt) (string, error) {
 				log.Println(e)
 				return "", e
 			}
+
+			// a:=1
+			if _, ok := hs.(*ast.Ident); ok && stmt.Tok == token.DEFINE {
+				if _, ok := variables[left]; !ok {
+					buf.WriteString("auto ")
+					variables[left] = struct{}{}
+				}
+			}
 			buf.WriteString(left + " = " + right + "")
+			if i < len(stmt.Lhs)-1 {
+				buf.WriteString(";\n")
+			}
 		}
 
 		return buf.String(), nil
 
 	case *ast.DeclStmt:
-		return parseDecl(fullText, stmt.Decl)
+		return parseDecl(fullText, stmt.Decl, variables)
 	case *ast.IncDecStmt:
 		left, e := parseExpr(fullText, stmt.X)
 		if e != nil {
@@ -54,9 +62,9 @@ func parseStmt(fullText []byte, v ast.Stmt) (string, error) {
 		}
 		return left + stmt.Tok.String() + "", nil
 	case *ast.IfStmt:
-		return parseIfStmt(fullText, stmt)
+		return parseIfStmt(fullText, stmt, variables)
 	case *ast.ForStmt:
-		return parseForStmt(fullText, stmt)
+		return parseForStmt(fullText, stmt, variables)
 	default:
 		return "", fmt.Errorf("unsupported statement: %s", stringifyNode(fullText, v))
 	}
@@ -65,8 +73,9 @@ func parseStmt(fullText []byte, v ast.Stmt) (string, error) {
 func parseBlockStmt(fullText []byte, blockStmt *ast.BlockStmt) (string, error) {
 	buf := new(strings.Builder)
 	buf.WriteString("{\n")
+	variables := make(map[string]struct{})
 	for _, stmt := range blockStmt.List {
-		s, e := parseStmt(fullText, stmt)
+		s, e := parseStmt(fullText, stmt, variables)
 		if e != nil {
 			log.Println(e)
 			return "", e
@@ -77,10 +86,10 @@ func parseBlockStmt(fullText []byte, blockStmt *ast.BlockStmt) (string, error) {
 	return buf.String(), nil
 }
 
-func parseIfStmt(fullText []byte, v *ast.IfStmt) (string, error) {
+func parseIfStmt(fullText []byte, v *ast.IfStmt, variables map[string]struct{}) (string, error) {
 	buf := new(strings.Builder)
 	if v.Init != nil {
-		s, e := parseStmt(fullText, v.Init)
+		s, e := parseStmt(fullText, v.Init, variables)
 		if e != nil {
 			log.Println(e)
 			return "", e
@@ -105,10 +114,10 @@ func parseIfStmt(fullText []byte, v *ast.IfStmt) (string, error) {
 	return buf.String(), nil
 }
 
-func parseForStmt(fullText []byte, v *ast.ForStmt) (string, error) {
+func parseForStmt(fullText []byte, v *ast.ForStmt, variables map[string]struct{}) (string, error) {
 	buf := new(strings.Builder)
 	if v.Init != nil {
-		s, e := parseStmt(fullText, v.Init)
+		s, e := parseStmt(fullText, v.Init, variables)
 		if e != nil {
 			log.Println(e)
 			return "", e
@@ -124,7 +133,7 @@ func parseForStmt(fullText []byte, v *ast.ForStmt) (string, error) {
 	}
 	buf.WriteString(str + ";")
 
-	post, e := parseStmt(fullText, v.Post)
+	post, e := parseStmt(fullText, v.Post, variables)
 	if e != nil {
 		log.Println(e)
 		return "", e
